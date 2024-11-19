@@ -13,7 +13,11 @@ console.log(`
 
 const viewAllEmployees = async () => {
     const query = `
-        SELECT e.id,e.first_name, e.last_name, r.title, r.salary,d.name, concat(e2.first_name, ' ', e2.last_name) as manager
+        SELECT e.id,e.first_name, e.last_name, r.title, d.name AS department, r.salary::FLOAT AS salary,
+            CASE 
+                WHEN e2.first_name IS NULL AND e2.last_name IS NULL THEN NULL
+                ELSE CONCAT(e2.first_name, ' ', e2.last_name) 
+            END AS manager
         FROM employee e 
             LEFT OUTER JOIN "role" r ON e.role_id = r.id
             LEFT OUTER JOIN department d ON d.id = r.department_id 
@@ -22,6 +26,7 @@ const viewAllEmployees = async () => {
 
     const { rows } = await pool.query(query);
 
+    //TODO figure out how to print without the index column
     console.table(rows);
 
     startInquirer();
@@ -29,15 +34,11 @@ const viewAllEmployees = async () => {
 
 const addEmployee = async () => {
     //get the manager ids from the database
-    const managerQuery = `
-        SELECT id, first_name, last_name FROM employee;
-    `;
+    const managerQuery = `SELECT id, first_name, last_name FROM employee;`;
     const { rows: managers } = await pool.query(managerQuery);
 
     //get the role ids from the database
-    const roleQuery = `
-        SELECT id, title FROM "role";
-    `;
+    const roleQuery = `SELECT id, title FROM "role";`;
     const { rows: roles } = await pool.query(roleQuery);
 
     const { first_name, last_name, role_id, manager_id } = await inquirer.prompt([
@@ -103,9 +104,7 @@ const viewAllRoles = async () => {
 
 const addRole = async () => {
     //get the department ids from the database
-    const departmentQuery = `
-        SELECT id, name FROM department;
-    `;
+    const departmentQuery = `SELECT id, name FROM department;`;
     const { rows: departments } = await pool.query(departmentQuery);
 
     const { title, salary, department_id } = await inquirer.prompt([
@@ -143,9 +142,7 @@ const addRole = async () => {
 }
 
 const viewAllDepartments = async () => {
-    const query = `
-        SELECT * FROM department;
-    `;
+    const query = `SELECT * FROM department;`;
 
     const { rows } = await pool.query(query);
 
