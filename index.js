@@ -26,7 +26,6 @@ const viewAllEmployees = async () => {
 
     const { rows } = await pool.query(query);
 
-    //TODO figure out how to print without the index column
     console.table(rows);
 
     startInquirer();
@@ -89,14 +88,13 @@ const addEmployee = async () => {
 
 const viewAllRoles = async () => {
     const query = `
-        SELECT r.id, r.title, d."name" AS department, r.salary
+        SELECT r.id, r.title, d."name" AS department, r.salary::FLOAT AS salary
         FROM "role" r 
             JOIN department d ON r.department_id = d.id 
     `;
 
     const { rows } = await pool.query(query);
 
-    //TODO figure out how to print without the index column
     console.table(rows);
 
     startInquirer();
@@ -111,12 +109,12 @@ const addRole = async () => {
         {
             type: "input",
             name: "title",
-            message: "Enter the role title:",
+            message: "Enter the name of the role:",
         },
         {
             type: "input",
             name: "salary",
-            message: "Enter the role salary:",
+            message: "Enter the salary of the role:",
         },
         {
             type: "list",
@@ -146,7 +144,6 @@ const viewAllDepartments = async () => {
 
     const { rows } = await pool.query(query);
 
-    //TODO figure out how to print without the index column
     console.table(rows);
 
     startInquirer();
@@ -172,6 +169,49 @@ const addDepartment = async () => {
     startInquirer();
 }
 
+const updateEmployeeManager = async () => {
+    //get the employee ids from the database
+    const employeeQuery = `SELECT id, first_name, last_name FROM employee;`;
+    const { rows: employees } = await pool.query(employeeQuery);
+
+    const { employee_id, manager_id } = await inquirer.prompt([
+        {
+            type: "list",
+            name: "employee_id",
+            message: "Choose the employee to update:",
+            choices: employees.map(employee => ({
+                name: `${employee.first_name} ${employee.last_name}`,
+                value: employee.id,
+            })),
+        },
+        {
+            type: "list",
+            name: "manager_id",
+            message: "Choose the employee's new manager:",
+            choices: [
+                { name: "None", value: null },
+                ...employees.map(manager => ({
+                    name: `${manager.first_name} ${manager.last_name}`,
+                    value: manager.id,
+                })),
+            ],
+        },
+    ]);
+
+    const query = `
+        UPDATE employee
+        SET manager_id = $2
+        WHERE id = $1;
+    `;
+
+    await pool.query(query, [employee_id, manager_id]);
+
+    console.log("Employee manager updated!");
+
+    startInquirer();
+}
+
+
 const startInquirer = async () => {
     const { action } = await inquirer.prompt({
         type: "list",
@@ -184,6 +224,7 @@ const startInquirer = async () => {
             "Add a role",
             "View all departments",
             "Add a department",
+            "Update an employee's manager",
             "Quit",
         ],
     });
@@ -201,6 +242,8 @@ const startInquirer = async () => {
             return addRole();
         case "Add an employee":
             return addEmployee();
+        case "Update an employee's manager":
+            return updateEmployeeManager();
         case "Quit":
             return process.exit(0);
     }
