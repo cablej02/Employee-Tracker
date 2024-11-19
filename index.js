@@ -211,6 +211,37 @@ const updateEmployeeManager = async () => {
     startInquirer();
 }
 
+const viewEmployeesByManager = async () => {
+
+    const managerQuery = `SELECT DISTINCT e2.id, e2.first_name, e2.last_name FROM employee e JOIN employee e2 ON e.manager_id = e2.id;`;
+    const { rows: managers } = await pool.query(managerQuery);
+
+    const { manager_id } = await inquirer.prompt([
+        {
+            type: "list",
+            name: "manager_id",
+            message: "Choose the manager:",
+            choices: managers.map(manager => ({
+                name: `${manager.first_name} ${manager.last_name}`,
+                value: manager.id,
+            })),
+        },
+    ]);
+
+    const query = `
+        SELECT e.id, e.first_name, e.last_name, r.title, d.name AS department, r.salary::FLOAT AS salary
+        FROM employee e 
+            JOIN "role" r ON e.role_id = r.id
+            JOIN department d ON d.id = r.department_id
+        WHERE e.manager_id = $1;
+    `;
+    const { rows } = await pool.query(query, [manager_id]);
+
+    console.table(rows);
+
+    startInquirer();
+}
+
 
 const startInquirer = async () => {
     const { action } = await inquirer.prompt({
@@ -225,6 +256,9 @@ const startInquirer = async () => {
             "View all departments",
             "Add a department",
             "Update an employee's manager",
+            "View employees by manager",
+            "View employees by department",
+            "View the total utilized budget of a department",
             "Quit",
         ],
     });
@@ -244,6 +278,12 @@ const startInquirer = async () => {
             return addEmployee();
         case "Update an employee's manager":
             return updateEmployeeManager();
+        case "View employees by manager":
+            return viewEmployeesByManager();
+        case "View employees by department":
+            return viewEmployeesByDepartment();
+        case "View the total utilized budget of a department":
+            return viewDepartmentBudget();
         case "Quit":
             return process.exit(0);
     }
