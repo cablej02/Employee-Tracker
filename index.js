@@ -1,7 +1,4 @@
 import inquirer from "inquirer";
-// import { QueryResult } from "pg";
-import pkg from 'pg';
-const { QueryResult } = pkg;
 import { pool, connectToDb } from "./src/connection.js";
 
 await connectToDb();
@@ -31,6 +28,18 @@ const viewAllEmployees = async () => {
 }
 
 const addEmployee = async () => {
+    //get the manager ids from the database
+    const managerQuery = `
+        SELECT id, first_name, last_name FROM employee;
+    `;
+    const { rows: managers } = await pool.query(managerQuery);
+
+    //get the role ids from the database
+    const roleQuery = `
+        SELECT id, title FROM "role";
+    `;
+    const { rows: roles } = await pool.query(roleQuery);
+
     const { first_name, last_name, role_id, manager_id } = await inquirer.prompt([
         {
             type: "input",
@@ -43,14 +52,22 @@ const addEmployee = async () => {
             message: "Enter the employee's last name:",
         },
         {
-            type: "input",
+            type: "list",
             name: "role_id",
-            message: "Enter the employee's role ID:",
+            message: "Choose the employee's role:",
+            choices: roles.map(role => ({
+                name: role.title,
+                value: role.id,
+            })),
         },
         {
-            type: "input",
+            type: "list",
             name: "manager_id",
-            message: "Enter the employee's manager ID:",
+            message: "Choose the employee's manager:", //TODO make this optional
+            choices: managers.map(manager => ({
+                name: `${manager.first_name} ${manager.last_name}`,
+                value: manager.id,
+            })),
         },
     ]);
 
@@ -81,6 +98,12 @@ const viewAllRoles = async () => {
 }
 
 const addRole = async () => {
+    //get the department ids from the database
+    const departmentQuery = `
+        SELECT id, name FROM department;
+    `;
+    const { rows: departments } = await pool.query(departmentQuery);
+
     const { title, salary, department_id } = await inquirer.prompt([
         {
             type: "input",
@@ -93,9 +116,13 @@ const addRole = async () => {
             message: "Enter the role salary:",
         },
         {
-            type: "input",
+            type: "list",
             name: "department_id",
-            message: "Enter the role department ID:",
+            message: "Choose the role's department:",
+            choices: departments.map(department => ({
+                name: department.name,
+                value: department.id,
+            })),
         },
     ]);
 
@@ -117,8 +144,8 @@ const viewAllDepartments = async () => {
     `;
 
     const { rows } = await pool.query(query);
-    //print the table without the index column
 
+    //TODO figure out how to print without the index column
     console.table(rows);
 
     startInquirer();
