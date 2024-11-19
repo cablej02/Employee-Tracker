@@ -1,0 +1,25 @@
+{
+  "name": "employee-tracker",
+  "version": "1.0.0",
+  "description": "A tool to view and manage a business's employees, roles, and departments",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cablej02/Employee-Tracker.git"
+  },
+  "author": "Jason Cable",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/cablej02/Employee-Tracker/issues"
+  },
+  "homepage": "https://github.com/cablej02/Employee-Tracker#readme",
+  "dependencies": {
+    "inquirer": "^12.1.0",
+    "pg": "^8.13.1"
+  }
+}
