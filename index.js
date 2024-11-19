@@ -63,11 +63,14 @@ const addEmployee = async () => {
         {
             type: "list",
             name: "manager_id",
-            message: "Choose the employee's manager:", //TODO make this optional
-            choices: managers.map(manager => ({
-                name: `${manager.first_name} ${manager.last_name}`,
-                value: manager.id,
-            })),
+            message: "Choose the employee's manager:",
+            choices: [
+                { name: "None", value: null },
+                ...managers.map(manager => ({
+                    name: `${manager.first_name} ${manager.last_name}`,
+                    value: manager.id,
+                })),
+            ],
         },
     ]);
 
@@ -92,6 +95,7 @@ const viewAllRoles = async () => {
 
     const { rows } = await pool.query(query);
 
+    //TODO figure out how to print without the index column
     console.table(rows);
 
     startInquirer();
