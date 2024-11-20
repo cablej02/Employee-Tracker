@@ -279,6 +279,43 @@ const viewEmployeesByDepartment = async () => {
     startInquirer();
 }
 
+const viewDepartmentBudget = async () => {
+    const departmentQuery = `SELECT * FROM department;`;
+    const { rows: departments } = await pool.query(departmentQuery);
+
+    const { department_id } = await inquirer.prompt([
+        {
+            type: "list",
+            name: "department_id",
+            message: "Choose the department:",
+            choices: departments.map(department => ({
+                name: department.name,
+                value: department.id,
+            })),
+        },
+    ]);
+
+    const query = `
+        SELECT d.name, SUM(r.salary::FLOAT) AS total_utilized_budget
+        FROM department d 
+            JOIN "role" r ON r.department_id = d.id
+            JOIN employee e ON e.role_id = r.id
+        WHERE d.id = $1
+        GROUP BY d.name;
+    `;
+
+    const { rows } = await pool.query(query, [department_id]);
+
+    console.log(`Total utilized budget for ${rows[0].name}: $${rows[0].total_utilized_budget}`);
+
+    startInquirer();
+}
+
+const deleteDepartment = async () => {}
+
+const deleteRole = async () => {}
+
+const deleteEmployee = async () => {}
 
 const startInquirer = async () => {
     const { action } = await inquirer.prompt({
@@ -295,6 +332,9 @@ const startInquirer = async () => {
             "Update an employee's manager",
             "View employees by manager",
             "View employees by department",
+            "Delete a department",
+            "Delete a role",
+            "Delete an employee",
             "View the total utilized budget of a department",
             "Quit",
         ],
@@ -319,6 +359,12 @@ const startInquirer = async () => {
             return viewEmployeesByManager();
         case "View employees by department":
             return viewEmployeesByDepartment();
+        case "Delete a department":
+            return deleteDepartment();
+        case "Delete a role":
+            return deleteRole();
+        case "Delete an employee":
+            return deleteEmployee();
         case "View the total utilized budget of a department":
             return viewDepartmentBudget();
         case "Quit":
