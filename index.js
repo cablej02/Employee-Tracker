@@ -97,7 +97,7 @@ const viewAllRoles = async () => {
     const query = `
         SELECT r.id, r.title, d."name" AS department, r.salary::FLOAT AS salary
         FROM "role" r 
-            JOIN department d ON r.department_id = d.id;
+            LEFT OUTER JOIN department d ON r.department_id = d.id;
     `;
 
     try {
@@ -110,7 +110,6 @@ const viewAllRoles = async () => {
 }
 
 const addRole = async () => {
-    //get the department ids from the database
     const departmentQuery = `SELECT id, name FROM department;`;
 
     const query = `
@@ -187,8 +186,50 @@ const addDepartment = async () => {
     }
 }
 
+const updateEmployeeRole = async () => {
+    const employeeQuery = `SELECT id, first_name, last_name FROM employee;`;
+    const roleQuery = `SELECT id, title FROM "role";`;
+
+    const query = `
+        UPDATE employee
+        SET role_id = $2
+        WHERE id = $1
+    `;
+
+    try {
+        const { rows: employees } = await pool.query(employeeQuery);
+        const { rows: roles } = await pool.query(roleQuery);
+
+        const { employee_id, role_id } = await inquirer.prompt([
+            {
+                type: "list",
+                name: "employee_id",
+                message: "Choose the employee to update:",
+                choices: employees.map(employee => ({
+                    name: `${employee.first_name} ${employee.last_name}`,
+                    value: employee.id,
+                })),
+            },
+            {
+                type: "list",
+                name: "role_id",
+                message: "Choose the employee's new role:",
+                choices: roles.map(role => ({
+                    name: role.title,
+                    value: role.id,
+                })),
+            },
+        ]);
+
+        await pool.query(query, [employee_id, role_id]);
+        console.log("Employee role updated!");
+        startInquirer();
+    } catch (error) {
+        console.error(error);
+    }
+}
+
 const updateEmployeeManager = async () => {
-    //get the employee ids from the database
     const employeeQuery = `SELECT id, first_name, last_name FROM employee;`;
 
     const query = `
@@ -344,11 +385,98 @@ const viewDepartmentBudget = async () => {
     }
 }
 
-const deleteDepartment = async () => {}
+const deleteDepartment = async () => {
+    const departmentQuery = `SELECT * FROM department;`;
 
-const deleteRole = async () => {}
+    const query = `
+        DELETE FROM department
+        WHERE id = $1;
+    `;
 
-const deleteEmployee = async () => {}
+    try {
+        const { rows: departments } = await pool.query(departmentQuery);
+
+        const { department_id } = await inquirer.prompt([
+            {
+                type: "list",
+                name: "department_id",
+                message: "Choose the department to delete:",
+                choices: departments.map(department => ({
+                    name: department.name,
+                    value: department.id,
+                })),
+            },
+        ]);
+
+        await pool.query(query, [department_id]);
+        console.log("Department deleted!");
+        startInquirer();
+    } catch (error) {
+        console.error(error);
+    }
+}
+
+const deleteRole = async () => {
+    const roleQuery = `SELECT * FROM "role";`;
+
+    const query = `
+        DELETE FROM "role"
+        WHERE id = $1;
+    `;
+
+    try {
+        const { rows: roles } = await pool.query(roleQuery);
+
+        const { role_id } = await inquirer.prompt([
+            {
+                type: "list",
+                name: "role_id",
+                message: "Choose the role to delete:",
+                choices: roles.map(role => ({
+                    name: role.title,
+                    value: role.id,
+                })),
+            },
+        ]);
+
+        await pool.query(query, [role_id]);
+        console.log("Role deleted!");
+        startInquirer();
+    } catch (error) {
+        console.error(error);
+    }
+}
+
+const deleteEmployee = async () => {
+    const employeeQuery = `SELECT * FROM employee;`;
+
+    const query = `
+        DELETE FROM employee
+        WHERE id = $1;
+    `;
+
+    try {
+        const { rows: employees } = await pool.query(employeeQuery);
+
+        const { employee_id } = await inquirer.prompt([
+            {
+                type: "list",
+                name: "employee_id",
+                message: "Choose the employee to delete:",
+                choices: employees.map(employee => ({
+                    name: `${employee.first_name} ${employee.last_name}`,
+                    value: employee.id,
+                })),
+            },
+        ]);
+
+        await pool.query(query, [employee_id]);
+        console.log("Employee deleted!");
+        startInquirer();
+    } catch (error) {
+        console.error(error);
+    }
+}
 
 const startInquirer = async () => {
     const { action } = await inquirer.prompt({

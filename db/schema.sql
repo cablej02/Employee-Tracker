@@ -22,11 +22,11 @@ CREATE TABLE department (
 CREATE TABLE role (
     id SERIAL PRIMARY KEY,
     title VARCHAR(30) UNIQUE NOT NULL,
-    salary DECIMAL(10, 2) NOT NULL,
+    salary DECIMAL NOT NULL,
     department_id INTEGER,
 
     FOREIGN KEY (department_id) REFERENCES department(id)
-    ON DELETE SET NULL -- If department is deleted, set role's department to NULL
+    ON DELETE SET NULL
 );
 
 CREATE TABLE employee (
@@ -37,8 +37,8 @@ CREATE TABLE employee (
     manager_id INTEGER,
 
     FOREIGN KEY (role_id) REFERENCES role(id)
-    ON DELETE SET NULL, -- If role is deleted, set employee's role to NULL
+    ON DELETE SET NULL,
     FOREIGN KEY (manager_id) REFERENCES employee(id)
-    ON DELETE SET NULL -- If manager is deleted, set employee's manager to NULL
+    ON DELETE SET NULL
 );
 
