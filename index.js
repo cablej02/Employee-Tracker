@@ -5,11 +5,13 @@ import { pool, connectToDb } from "./src/connection.js";
 await connectToDb();
 
 console.log(`
+
 ╔══════════════════════════╗
 ║                          ║
 ║     Employee Tracker     ║
 ║                          ║
 ╚══════════════════════════╝
+
 `);
 
 const viewAllEmployees = async () => {
@@ -22,7 +24,8 @@ const viewAllEmployees = async () => {
         FROM employee e 
             LEFT OUTER JOIN "role" r ON e.role_id = r.id
             LEFT OUTER JOIN department d ON d.id = r.department_id 
-            LEFT OUTER JOIN employee e2 ON e2.id = e.manager_id;
+            LEFT OUTER JOIN employee e2 ON e2.id = e.manager_id
+        ORDER BY e.id;
     `;
 
     try {
