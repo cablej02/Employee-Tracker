@@ -1,3 +1,4 @@
+import "dotenv/config";
 import inquirer from "inquirer";
 import { pool, connectToDb } from "./src/connection.js";
 
@@ -236,6 +237,42 @@ const viewEmployeesByManager = async () => {
         WHERE e.manager_id = $1;
     `;
     const { rows } = await pool.query(query, [manager_id]);
+
+    console.table(rows);
+
+    startInquirer();
+}
+
+const viewEmployeesByDepartment = async () => {
+    const departmentQuery = `SELECT * FROM department;`;
+    const { rows: departments } = await pool.query(departmentQuery);
+
+    const { department_id } = await inquirer.prompt([
+        {
+            type: "list",
+            name: "department_id",
+            message: "Choose the department:",
+            choices: departments.map(department => ({
+                name: department.name,
+                value: department.id,
+            })),
+        },
+    ]);
+
+    const query = `
+        SELECT e.id, e.first_name, e.last_name, r.title, d.name AS department, r.salary::FLOAT AS salary,
+            CASE 
+                WHEN e2.first_name IS NULL AND e2.last_name IS NULL THEN NULL
+                ELSE CONCAT(e2.first_name, ' ', e2.last_name) 
+            END AS manager
+        FROM employee e
+            LEFT OUTER JOIN "role" r ON e.role_id = r.id
+            LEFT OUTER JOIN department d ON r.department_id = d.id 
+            LEFT OUTER JOIN employee e2 ON e2.id = e.manager_id
+        WHERE d.id = $1;
+    `;
+
+    const { rows } = await pool.query(query, [department_id]);
 
     console.table(rows);
 
