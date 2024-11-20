@@ -490,6 +490,7 @@ const startInquirer = async () => {
             "Add a role",
             "View all departments",
             "Add a department",
+            "Update an employee's role",
             "Update an employee's manager",
             "View employees by manager",
             "View employees by department",
@@ -514,6 +515,8 @@ const startInquirer = async () => {
             return addRole();
         case "Add an employee":
             return addEmployee();
+        case "Update an employee's role":
+            return updateEmployeeRole();
         case "Update an employee's manager":
             return updateEmployeeManager();
         case "View employees by manager":
