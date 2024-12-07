@@ -99,7 +99,7 @@ const addEmployee = async () => {
         //insert the employee into the database
         await pool.query(query, [first_name, last_name, role_id, manager_id]);
 
-        console.log("Employee added!");
+        console.log(`Added new employee ${first_name} ${last_name}!`);
 
         //restart the inquirer prompt
         startInquirer();
@@ -140,12 +140,24 @@ const addRole = async () => {
     try {
         const { rows: departments } = await pool.query(departmentQuery);
 
-        const { title, salary, department_id } = await inquirer.prompt([
+        //get title name from user input
+        const { title} = await inquirer.prompt([
             {
                 type: "input",
                 name: "title",
                 message: "Enter the name of the role:",
             },
+        ]);
+
+        //check if the role already exists
+        const roleExists = await pool.query(`SELECT * FROM "role" WHERE title = $1;`, [title]);
+        if(roleExists.rows.length > 0) {
+            console.log(`Role ${title} already exists!`);
+            return startInquirer();
+        }
+
+        //if the role does not exist, prompt the user for the salary and department
+        const {salary, department_id } = await inquirer.prompt([
             {
                 type: "input",
                 name: "salary",
@@ -162,8 +174,12 @@ const addRole = async () => {
             },
         ]);
 
+        //insert the role into the database
         await pool.query(query, [title, salary, department_id]);
-        console.log("Role added!");
+
+        console.log(`Added ${title} role!`);
+
+        //restart the inquirer prompt
         startInquirer();
     } catch (error) {
         console.error(error);
@@ -204,10 +220,17 @@ const addDepartment = async () => {
             },
         ]);
 
+        //check if the department already exists
+        const departmentExists = await pool.query(`SELECT * FROM department WHERE name = $1;`, [name]);
+        if(departmentExists.rows.length > 0) {
+            console.log(`Department ${name} already exists!`);
+            return startInquirer();
+        }
+
         //insert the department into the database
         await pool.query(query, [name]);
 
-        console.log("Department added!");
+        console.log(`Added ${name} department!`);
 
         //restart the inquirer prompt
         startInquirer();
@@ -261,7 +284,10 @@ const updateEmployeeRole = async () => {
         //update the employee's role in the database
         await pool.query(query, [employee_id, role_id]);
 
-        console.log("Employee role updated!");
+        // log the updated role
+        const selectedEmployee = employees.find(employee => employee.id === employee_id);
+        const selectedRole = roles.find(role => role.id === role_id);
+        console.log(`Employee ${selectedEmployee.first_name} ${selectedEmployee.last_name}'s role updated to ${selectedRole.title}!`);
 
         //restart the inquirer prompt
         startInquirer();
@@ -313,7 +339,10 @@ const updateEmployeeManager = async () => {
         //update the employee's manager in the database
         await pool.query(query, [employee_id, manager_id]);
 
-        console.log("Employee manager updated!");
+        // log the updated manager
+        const selectedEmployee = employees.find(employee => employee.id === employee_id);
+        const selectedManager = employees.find(manager => manager.id === manager_id);
+        console.log(`Employee ${selectedEmployee.first_name} ${selectedEmployee.last_name}'s manager updated to ${selectedManager.first_name} ${selectedManager.last_name}!`);
 
         //restart the inquirer prompt
         startInquirer();
@@ -486,10 +515,13 @@ const deleteDepartment = async () => {
             },
         ]);
 
+        //Could add a check to see if the department is being used by any roles before deleting
+
         //delete the department from the database
         await pool.query(query, [department_id]);
 
-        console.log("Department deleted!");
+        const selectedDepartment = departments.find(department => department.id === department_id);
+        console.log(`Department ${selectedDepartment.name} deleted!`);
 
         //restart the inquirer prompt
         startInquirer();
@@ -525,10 +557,14 @@ const deleteRole = async () => {
             },
         ]);
 
+        //Could add a check to see if the role is being used by any employees before deleting
+
         //delete the role from the database
         await pool.query(query, [role_id]);
 
-        console.log("Role deleted!");
+        // log the deleted role
+        const selectedRole = roles.find(role => role.id === role_id);
+        console.log(`Role ${selectedRole.title} deleted!`);
 
         //restart the inquirer prompt
         startInquirer();
@@ -567,7 +603,9 @@ const deleteEmployee = async () => {
         //delete the employee from the database
         await pool.query(query, [employee_id]);
 
-        console.log("Employee deleted!");
+        // log the deleted employee
+        const selectedEmployee = employees.find(employee => employee.id === employee_id);
+        console.log(`Employee ${selectedEmployee.first_name} ${selectedEmployee.last_name} deleted!`);
 
         //restart the inquirer prompt
         startInquirer();
@@ -596,7 +634,7 @@ const startInquirer = async () => {
             "Delete a role",
             "Delete an employee",
             "View the total utilized budget of a department",
-            "Quit",
+            "Exit",
         ],
     });
 
@@ -630,7 +668,7 @@ const startInquirer = async () => {
             return deleteEmployee();
         case "View the total utilized budget of a department":
             return viewDepartmentBudget();
-        case "Quit":
+        case "Exit":
             return process.exit(0);
     }
 }
