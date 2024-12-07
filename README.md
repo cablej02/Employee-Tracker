@@ -34,7 +34,7 @@ npm install
 
 ## Usage
 
-Follow this [walkthrough video]() or the following instructions for usage:
+Follow this [walkthrough video](https://drive.google.com/file/d/1pre6-S24TPu63pgSQm3aAis5Gwe5A-1W/view?usp=sharing) or the following instructions for usage:
 
 1. **Run the Tool:** Start the Vehicle Builder by running the following command in your terminal:
 
